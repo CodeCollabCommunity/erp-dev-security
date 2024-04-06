@@ -1,21 +1,21 @@
 version: '3.17'
 
 networks:
-  e_learning_network:
+  security_module:
     driver: bridge
 
 services:
-  e-learning-app:
-    container_name: e-learning-app
+  security_microservice:
+    container_name: security_microservice
     image: ${IMAGE_NAME}
     ports:
-      - '80:80'
+      - '55:55'
     build:
       context: .
       dockerfile: Dockerfile
-    command: uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 80 --reload
+    command: uvicorn app.main:app --proxy-headers --host 0.0.0.0 --port 55 --reload
     networks:
-      - e_learning_network
+      - security_module
     volumes:
       - .:/usr/src/app
     env_file:
@@ -35,16 +35,16 @@ services:
     env_file:
       - .env
     ports:
-      - "5432:5432"
+      - "2345:5432"
     networks:
-      - e_learning_network
+      - security_module
 
   migration:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres?sslmode=disable
     image: ${IMAGE_NAME}:latest
     networks:
-      - e_learning_network
+      - security_module
     entrypoint: /bin/sh -c "dbmate wait && dbmate up"
     depends_on:
       - db

@@ -6,7 +6,7 @@ from app.api import api_router
 
 
 fastapi_app = FastAPI(
-    title='security_microservice',
+    title='security microservice',
     description='security microservice API',
     # docs_url=None, # Disable docs (Swagger UI)
     # redoc_url=None, # Disable redoc
@@ -15,8 +15,8 @@ fastapi_app = FastAPI(
 
 
 @fastapi_app.get("/", status_code=200)
-def healthcheck() -> str:
-    return {"Status" "Ok"}
+def healthcheck() -> dict:
+    return {"Healthcheck": "Ok"}
 
 
 fastapi_app.include_router(
