@@ -7,10 +7,6 @@ RUN apt-get update \
     && apt-get clean \
     && apt-get -y install openssh-client libpq-dev curl nano
 
-# DBMATE
-RUN curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64
-RUN chmod +x /usr/local/bin/dbmate
-
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 

@@ -23,32 +23,17 @@ services:
     depends_on:
       db:
         condition: service_started
-
+        
   db:
-    image: postgres:15.3
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    volumes:
-      - db_data:/var/lib/postgresql/data/
-    env_file:
-      - .env
+    image: mongo
     ports:
-      - "2345:5432"
+      - "27017:27017"
+    # environment:
+    #   MONGO_INITDB_DATABASE: security
+    volumes:
+      - ./data:/data/db
     networks:
       - security_module
-
-  migration:
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/postgres?sslmode=disable
-    image: ${IMAGE_NAME}:latest
-    networks:
-      - security_module
-    entrypoint: /bin/sh -c "dbmate wait && dbmate up"
-    depends_on:
-      - db
-
 
 volumes:
     db_data:
