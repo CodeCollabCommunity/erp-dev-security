@@ -8,14 +8,14 @@ class DatabaseSettings(AppSettings):
     """
     Database settings
     """
-    host: str = "127.0.0.1"
-    port: int = 5432
-    password: str = "postgres"
-    user: str = "postgres"
-    name: str = "axios_core"
+    host: str = "172.23.0.2"
+    port: int = 27017
+    password: str = "pass"
+    user: str = "user"
+    name: str = "security"
 
     @property
-    def postgres_uri(self):
+    def mongodb_uri(self):
         """
         Return the postgres uri
         """
@@ -26,7 +26,7 @@ class DatabaseSettings(AppSettings):
         """
         Return the database url
         """
-        return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}?sslmode=disable"
+        return f"mongodb://{self.host}:{self.port}/{self.name}"
 
     class Config:
         """ Subclasses of Config to set prefix """
