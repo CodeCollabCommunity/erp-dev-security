@@ -1,7 +1,5 @@
-from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+"""FastAPI app module"""
+from fastapi import FastAPI
 from app.api import api_router
 
 
@@ -16,6 +14,7 @@ fastapi_app = FastAPI(
 
 @fastapi_app.get("/", status_code=200)
 def healthcheck() -> dict:
+    """API Healthcheck"""
     return {"Healthcheck": "Ok"}
 
 

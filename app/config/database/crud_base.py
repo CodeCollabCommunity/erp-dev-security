@@ -1,16 +1,18 @@
-from sqlalchemy.orm import Session
+"""CRUD BASE module"""
+from typing import Any, Generic, List, Type, TypeVar
+
 from fastapi.encoders import jsonable_encoder
-from typing import Generic, TypeVar, Type, Any, List
+from sqlalchemy.orm import Session
+
 from .base_class import Base
 
-ModelType = TypeVar('ModelType', bound=Base)
+ModelType = TypeVar("ModelType", bound=Base)
 CreateSchemaType = TypeVar('CreateSchemaType', bound=Base)
 UpdateSchemaType = TypeVar('UpdateSchemaType', bound=Base)
 
 
 class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
-    def __init__(self, model: Type[ModelType]):
-        """
+    """
         CRUD object with default methods to Create, Read, Update, Delete (CRUD).
 
         Args:
@@ -18,6 +20,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         `model`: A SQLAlchemy model class
         `schema`: A Pydantic model (schema) class
         """
+    def __init__(self, model: Type[ModelType]):
         self.model = model
 
     def create(self, db: Session, obj_in: CreateSchemaType | dict[str, Any]) -> ModelType:
