@@ -65,3 +65,5 @@ Follow the next steps to build the python and db containers:
     You can remove flag `-d` to show in terminal logs while container is running.
 
 Now you can run the api on your localhost: http://localhost:55
+
+Test
