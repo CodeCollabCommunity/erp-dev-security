@@ -2,7 +2,7 @@
 from typing import Any, Generic, List, Type, TypeVar
 
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy.orm import Session
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from .base_class import Base
 
@@ -23,34 +23,35 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
     def __init__(self, model: Type[ModelType]):
         self.model = model
 
-    def create(self, db: Session, obj_in: CreateSchemaType | dict[str, Any]) -> ModelType:
+    async def create(self, db: AsyncIOMotorClient, obj_in: CreateSchemaType | dict[str, Any]) -> ModelType:
         """Create a ModelType object"""
-        obj_in_data = jsonable_encoder(obj_in)
-        db_obj = self.model(**obj_in_data)  # type: ignore
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+        obj_in_data = obj_in if isinstance(obj_in, dict) else obj_in.model_dump()
+        model_obj = self.model(**obj_in_data)
+        db_obj = jsonable_encoder(model_obj)
+        db_obj = await db.collection.insert_one(db_obj)
+        inserted_obj = await db.collection.find_one({"id": db_obj.inserted_id})
+        return inserted_obj
 
-    def update(self, db: Session, obj_in: CreateSchemaType | dict[str, Any], db_obj: ModelType) -> ModelType:
+    async def update(self, db: AsyncIOMotorClient, obj_in: UpdateSchemaType | dict[str, Any], db_obj: ModelType) -> ModelType:
         """Update a ModelType object"""
-        obj_in_data = jsonable_encoder(db_obj)
+        obj_in_data = obj_in if isinstance(obj_in, dict) else obj_in.model_dump()
+        model_object = jsonable_encoder(db_obj)
+
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
             update_data = obj_in.dict(exclude_none=True)
         for field in obj_in_data:
             if field in update_data:
-                setattr(db_obj, field, update_data[field])
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
-        return db_obj
+                setattr(model_object, field, update_data[field])
+        db_obj = await db.collection.update_one({"_id": db_obj["_id"]}, {"$set": model_object})
+        updated_obj = await db.collection.find_one({"_id": db_obj.inserted_id})
+        return updated_obj
 
-    def get(self, id: int, db: Session) -> ModelType:
-        """Get a single ModelType filtered by id"""
-        return db.query(self.model).filter(self.model.id == id).first()
+    def get(self, object_id: str, db: AsyncIOMotorClient) -> ModelType:
+        """Get a single ModelType filtered by object_id"""
+        return db.collection.find_one({"_id": object_id})
 
-    def get_multi(self, db: Session) -> List[ModelType]:
+    def get_multi(self, db: AsyncIOMotorClient) -> List[ModelType]:
         """Get al ModelTypes objects"""
-        return db.query(self.model).all()
+        return db.collection.find({self.model})
