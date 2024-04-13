@@ -9,7 +9,7 @@ from app.schemas import Token, UserAuthSchema
 router = APIRouter()
 
 
-@router.get('/login/', description='Sign-in.', response_model=Token)
+@router.post('/login/', description='Sign-in.', response_model=Token)
 def login_for_access_token(authenticate: UserAuthSchema, db: Session = Depends(get_db)):
     """Returns The generated access token."""
     access_token = generate_token(db=db, email=authenticate.email, password=authenticate.password)
