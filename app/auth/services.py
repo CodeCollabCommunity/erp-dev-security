@@ -3,7 +3,8 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import HTTPException, status
-from jose import jwt
+from fastapi.responses import JSONResponse
+from jose import exceptions, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
@@ -35,7 +36,7 @@ def get_password_hash(plain_password):
     return pwd_context.hash(plain_password)
 
 
-def authenticate_user(email: str, password: str, db: Session) -> models.User:
+def authenticate_user(email: str, password: str, db: Session) -> models.User | bool:
     """Return user if credential validation is True."""
     if user := db.query(models.User).filter(models.User.email == email).first():  # type: ignore
         return user if verify_password(password, user.password) else False
@@ -65,4 +66,26 @@ def generate_token(db: Session, email: str, password: str) -> str:
     raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='El usuario o la contraseña no coinciden',
+        )
+
+
+def validate_token(token: str) -> None :
+    """Validates token according his generations params"""
+    try:
+        jwt.decode(token, AUTH_SECRET_KEY, AUTH_ALGORITHM)
+    except exceptions.JWEInvalidAuth:
+        return JSONResponse(
+            content={"message:": "Invalid Token."},
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+    except exceptions.ExpiredSignatureError:
+        return JSONResponse(
+            content={"message:": "Token Expired"},
+            status_code=status.HTTP_401_UNAUTHORIZED
+        )
+    except exceptions.JWTError as jwt_error:
+        return JSONResponse(
+            content={"message": "Unable to validate token",
+                     "detail": str(jwt_error)},
+            status_code=status.HTTP_401_UNAUTHORIZED
         )

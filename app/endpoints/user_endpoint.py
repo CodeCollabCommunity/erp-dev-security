@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 from app.crud import user_crud
 from app.helpers.db import get_db
 from app.schemas import UserCreateSchema, UserResponseSchema
+from app.middlewares.veriffy_token_route import ValidateTokenRoute
 
-router = APIRouter()
+router = APIRouter(route_class=ValidateTokenRoute)
 
 
 @router.post("/", response_model=UserResponseSchema)

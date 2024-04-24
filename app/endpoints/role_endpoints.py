@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.crud import role_crud
 from app.helpers.db import get_db
+from app.middlewares.veriffy_token_route import ValidateTokenRoute
 from app.schemas import RoleBaseSchema, RoleCreateSchema
 
-router = APIRouter()
+router = APIRouter(route_class=ValidateTokenRoute)
 
 
 @router.post("/", response_model=RoleBaseSchema)
