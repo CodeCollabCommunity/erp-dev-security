@@ -51,7 +51,7 @@ try:
         # User Creation
         cursor.execute(
             "INSERT INTO \"user\" (email, password, role_id) VALUES (%s, %s, %s)",
-            ('MoronSuperAdmin@erpcommunity.com', '$2b$12$TwlD8vZ8ZXSIhzBetBswNu3WxvGk0HbsqaLwzC7m35ILmH6gJDY.e', 1)
+            ('MoronSuperAdmin@erpcommunity.com', '$2b$12$.DLo2Bys5bbKgwDC7GoiBOG8IDSOOUQrAm/cBm4MpYizwe8zBnNZe', 1)
         )
 
     # Commit changes to store them in DB
