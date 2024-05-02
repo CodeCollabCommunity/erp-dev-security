@@ -45,7 +45,7 @@ services:
     image: ${IMAGE_NAME}:latest
     networks:
       - security_module
-    entrypoint: /bin/sh -c "dbmate wait && dbmate up"
+    entrypoint: /bin/sh -c "dbmate wait && dbmate up && python initialization.py"
     depends_on:
       - db
 

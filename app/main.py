@@ -1,9 +1,11 @@
-from fastapi.staticfiles import StaticFiles
-from fastapi import FastAPI, WebSocket
+import time
+
+from fastapi import FastAPI, Request, WebSocket, requests
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from app.api import api_router
 
+from app.api import api_router
 
 fastapi_app = FastAPI(
     title='security microservice',
@@ -13,6 +15,13 @@ fastapi_app = FastAPI(
     swagger_ui_parameters={'docExpansion': 'None'}
 )
 
+fastapi_app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins= ["*"],
+    allow_methods= ["*"],
+    allow_headers= ["*"]
+)
 
 @fastapi_app.get("/", status_code=200)
 def healthcheck() -> dict:
