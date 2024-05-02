@@ -6,18 +6,18 @@ from psycopg2 import Error
 
 
 try:
-    # Parámetros de conexión
+    # conn params
     postgres_uri = os.getenv("DATABASE_URL")
     connection = psycopg2.connect(postgres_uri)
 
-    # Crear un cursor para ejecutar consultas
+    # db cursor
     cursor = connection.cursor()
 
-    # Verificar si ya existe el rol 'SUPERADMIN'
+    # verify if exist the initial role
     cursor.execute("SELECT id FROM role WHERE name = %s", ('SUPERADMIN',))
     role_id = cursor.fetchone()
 
-    if role_id is None:  # Si no existe, entonces insertar
+    if role_id is None:  # if not, then ->
         # Role creation
         cursor.execute(
             "INSERT INTO role (name) VALUES (%s)",
@@ -42,21 +42,22 @@ try:
             ]
         )
 
-    # Verificar si ya existe el usuario 'SUPERADMIN'
-    cursor.execute("SELECT id FROM \"user\" WHERE email = %s", ('SUPERADMIN',))
+    # Verify if exist super user,
+    cursor.execute("SELECT id FROM \"user\" WHERE email = %s", ('MoronSuperAdmin@erp_community.com',))
     user_id = cursor.fetchone()
 
-    if user_id is None:  # Si no existe, entonces insertar
+    if user_id is None:  # if not, then -> 
         # User Creation
         cursor.execute(
             "INSERT INTO \"user\" (email, password, role_id) VALUES (%s, %s, %s)",
-            ('SUPERADMIN', '$2b$12$TwlD8vZ8ZXSIhzBetBswNu3WxvGk0HbsqaLwzC7m35ILmH6gJDY.e', 1)
+            ('MoronSuperAdmin@erp_community.com', '$2b$12$TwlD8vZ8ZXSIhzBetBswNu3WxvGk0HbsqaLwzC7m35ILmH6gJDY.e', 1)
         )
 
     # Commit changes to store them in DB
     connection.commit()
 
-    # Cerrar el cursor y la conexión
+
+    # Close cursor and connection
     if connection:
         cursor.close()
         connection.close()
@@ -65,4 +66,5 @@ except (Exception, Error) as error:
     print("Error al conectar a PostgreSQL:", error)
 
 
-os.remove(__file__)
+
+# os.remove(__file__)
