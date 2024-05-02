@@ -7,6 +7,7 @@ from psycopg2 import Error
 
 try:
     # conn params
+    dotenv.load_dotenv()
     postgres_uri = os.getenv("DATABASE_URL")
     connection = psycopg2.connect(postgres_uri)
 
@@ -43,14 +44,14 @@ try:
         )
 
     # Verify if exist super user,
-    cursor.execute("SELECT id FROM \"user\" WHERE email = %s", ('MoronSuperAdmin@erp_community.com',))
+    cursor.execute("SELECT id FROM \"user\" WHERE email = %s", ('MoronSuperAdmin@erpcommunity.com',))
     user_id = cursor.fetchone()
 
-    if user_id is None:  # if not, then -> 
+    if user_id is None:  # if not, then ->
         # User Creation
         cursor.execute(
             "INSERT INTO \"user\" (email, password, role_id) VALUES (%s, %s, %s)",
-            ('MoronSuperAdmin@erp_community.com', '$2b$12$TwlD8vZ8ZXSIhzBetBswNu3WxvGk0HbsqaLwzC7m35ILmH6gJDY.e', 1)
+            ('MoronSuperAdmin@erpcommunity.com', '$2b$12$TwlD8vZ8ZXSIhzBetBswNu3WxvGk0HbsqaLwzC7m35ILmH6gJDY.e', 1)
         )
 
     # Commit changes to store them in DB
