@@ -1,10 +1,11 @@
 """Role schema module for role data serialization."""
+from uuid import UUID
 from pydantic import BaseModel, Field, field_validator
 
 
 class RoleBaseSchema(BaseModel):
     """Define the schema for a Role object."""
-    id: int
+    id: UUID
     name: str = Field(min_length=3)
 
 

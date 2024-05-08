@@ -1,5 +1,5 @@
 import os
-
+from uuid import uuid4
 import dotenv
 import psycopg2
 from psycopg2 import Error
@@ -21,25 +21,25 @@ try:
     if role_id is None:  # if not, then ->
         # Role creation
         cursor.execute(
-            "INSERT INTO role (name) VALUES (%s)",
+            "INSERT INTO role (name) VALUES (%s) RETURNING id",
             ('SUPERADMIN', )
         )
-
+        role_id = cursor.fetchone()[0]
         # Role operation creation
         cursor.executemany(
             "INSERT INTO role_operation (name, module, role_id) VALUES (%s, %s, %s)",       
             [
-                ('CREATE', 'USER', 1),
-                ('READ', 'USER', 1),
-                ('UPDATE', 'USER', 1),
+                ('CREATE', 'USER', role_id),
+                ('READ', 'USER', role_id),
+                ('UPDATE', 'USER', role_id),
 
-                ('CREATE', 'ROLE', 1),
-                ('READ', 'ROLE', 1),
-                ('UPDATE', 'ROLE', 1),
+                ('CREATE', 'ROLE', role_id),
+                ('READ', 'ROLE', role_id),
+                ('UPDATE', 'ROLE', role_id),
 
-                ('CREATE', 'ROLE_OPERATION', 1),
-                ('READ', 'ROLE_OPERATION', 1),
-                ('UPDATE', 'ROLE_OPERATION', 1),
+                ('CREATE', 'ROLE_OPERATION', role_id),
+                ('READ', 'ROLE_OPERATION', role_id),
+                ('UPDATE', 'ROLE_OPERATION', role_id),
             ]
         )
 
@@ -51,7 +51,10 @@ try:
         # User Creation
         cursor.execute(
             "INSERT INTO \"user\" (email, password, role_id) VALUES (%s, %s, %s)",
-            ('MoronSuperAdmin@erpcommunity.com', '$2b$12$.DLo2Bys5bbKgwDC7GoiBOG8IDSOOUQrAm/cBm4MpYizwe8zBnNZe', 1)
+            ('MoronSuperAdmin@erpcommunity.com',
+             '$2b$12$.DLo2Bys5bbKgwDC7GoiBOG8IDSOOUQrAm/cBm4MpYizwe8zBnNZe', 
+             role_id
+            )
         )
 
     # Commit changes to store them in DB

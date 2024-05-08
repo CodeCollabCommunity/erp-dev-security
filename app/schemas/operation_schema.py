@@ -1,11 +1,13 @@
 """Operation schema module for operation data serialization."""
 from typing import ClassVar
-from pydantic import BaseModel, Field,  model_validator
+from uuid import UUID
+
+from pydantic import BaseModel, Field, model_validator
 
 
 class OperationBaseSchema(BaseModel):
     """Define the schema for a Operation object."""
-    id: int
+    id: UUID
     name: str = Field(min_length=3)
     module: str
 
@@ -13,7 +15,7 @@ class OperationBaseSchema(BaseModel):
 class OperationCreateSchema(OperationBaseSchema):
     """Define the create schema for a Operation object."""
     id: ClassVar
-    role_id: int
+    role_id: UUID
 
     @model_validator(mode="before")
     def standarize_fields(self):

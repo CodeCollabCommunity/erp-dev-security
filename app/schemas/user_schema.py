@@ -1,6 +1,6 @@
 """User schema module for user data serialization."""
 from typing import ClassVar
-
+from uuid import UUID
 from fastapi import HTTPException, status
 from pydantic import (BaseModel, EmailStr, Field,
                       field_validator)
@@ -11,7 +11,7 @@ from app.auth.services import validate_password
 class UserBaseSchema(BaseModel):
     """User base schema class."""
     email: EmailStr = Field(examples=['Some@Some.Some'])
-    role_id: int | None = None
+    role_id: UUID | None = None
     password: str = Field(min_length=5, max_length=15)
 
 
@@ -34,7 +34,7 @@ class UserCreateSchema(UserBaseSchema):
 class UserUpdateSchema(UserBaseSchema):
     """Schema class for user update."""
     email: EmailStr | None = None
-    role_id: int | None = None
+    role_id: UUID | None = None
     password: str | None = None
     re_password: str | None = None
 

@@ -1,9 +1,9 @@
 -- migrate:up
 CREATE TABLE "user_role"
 (
-   id integer generated always as identity primary key,
-   user_id integer not null,
-   role_id integer not null,
+   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+   user_id UUID not null,
+   role_id UUID not null,
    created_at timestamp not null default CURRENT_TIMESTAMP,
 
    CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,

@@ -1,3 +1,4 @@
+from uuid import UUID
 from sqlalchemy.orm import Session
 from fastapi.encoders import jsonable_encoder
 from typing import Generic, TypeVar, Type, Any, List
@@ -44,7 +45,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         db.refresh(db_obj)
         return db_obj
 
-    def get(self, id: int, db: Session) -> ModelType:
+    def get(self, id: int | UUID, db: Session) -> ModelType:
         """Get a single ModelType filtered by id"""
         return db.query(self.model).filter(self.model.id == id).first()
 
