@@ -1,10 +1,13 @@
+import base64
+import json
 import re
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+from Crypto.Cipher import PKCS1_OAEP
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
-from jose import exceptions, jwt
+from jose import exceptions, jwe, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
@@ -16,6 +19,8 @@ pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 AUTH_SECRET_KEY = AUTHSETTINGS.SECRET_KEY
 AUTH_ALGORITHM = AUTHSETTINGS.ALGORITHM
 AUTH_ACCESS_TOKEN_EXPIRE_MINUTES = AUTHSETTINGS.ACCESS_TOKEN_EXPIRE_MINUTES
+PUBLIC_KEY = AUTHSETTINGS.PUBLIC_KEY
+PRIVATE_KEY = AUTHSETTINGS.PRIVATE_KEY
 
 
 def validate_password(password: str) -> Any:
@@ -54,6 +59,33 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return jwt.encode(to_encode, AUTH_SECRET_KEY, AUTH_ALGORITHM)
 
 
+def encrypt_data(data_dict: dict):
+    """Returns encrypted data after encoded at UTF-8"""
+    encrypted_payload = {}
+    # with open('erp_public_key.pem', 'rb') as f:
+    #     rsa_public_key = RSA.import_key(f.read())
+    cipher_rsa = PKCS1_OAEP.new(PUBLIC_KEY)
+    for field, value in data_dict.items():
+        if isinstance(value, str):
+            encrypted_value = cipher_rsa.encrypt(value.encode("UTF-8"))
+            encrypted_payload[field] = base64.b64encode(encrypted_value).decode("UTF-8")
+
+    return encrypted_payload
+
+
+def decrypt_data(data_dict: dict):
+    """Returns decrypted data after decoded at UTF-8"""
+    decrypted_data = {}
+    # with open('erp_private_key.pem', 'rb') as f:
+    #     rsa_private_key = RSA.import_key(f.read())
+    cipher_rsa = PKCS1_OAEP.new(PRIVATE_KEY)
+    for field, value in data_dict.items():
+        if isinstance(value, str):
+            decoded_value = base64.b64decode(data_dict[field].encode("UTF-8"))
+            decrypted_data[field] = cipher_rsa.decrypt(decoded_value)
+    return decrypted_data
+
+
 def generate_token(db: Session, email: str, password: str) -> str:
     """Generate a token for a user."""
     if db_user := authenticate_user(email=email, password=password, db=db):
@@ -62,7 +94,8 @@ def generate_token(db: Session, email: str, password: str) -> str:
         "id": str(db_user.id),  # type: ignore
         "email": str(db_user.email)  # type: ignore
         }
-        return create_access_token(data=payload, expires_delta=access_token_expires)
+        encrypted_payload = encrypt_data(data_dict=payload)
+        return create_access_token(data=encrypted_payload, expires_delta=access_token_expires)
     raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='El usuario o la contraseña no coinciden',

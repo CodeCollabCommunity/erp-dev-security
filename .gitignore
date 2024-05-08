@@ -41,3 +41,6 @@ cover/
 src/static/*
 !src/static/css/
 !src/static/css/*
+
+# Private content
+*.pem
