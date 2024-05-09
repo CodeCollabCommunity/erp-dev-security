@@ -50,39 +50,42 @@ def authenticate_user(email: str, password: str, db: Session) -> models.User | b
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     """Returns The generated access token."""
-    to_encode = data.copy()
+    to_encrypt = data.copy()
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode['exp'] = expire
-    return jwt.encode(to_encode, AUTH_SECRET_KEY, AUTH_ALGORITHM)
+    to_encrypt['exp'] = expire
+    to_encrypt = encrypt_data(data_dict=to_encrypt)
+    return jwt.encode(to_encrypt, AUTH_SECRET_KEY, AUTH_ALGORITHM)
 
 
 def encrypt_data(data_dict: dict):
     """Returns encrypted data after encoded at UTF-8"""
-    encrypted_payload = {}
-    # with open('erp_public_key.pem', 'rb') as f:
-    #     rsa_public_key = RSA.import_key(f.read())
+    encrypted_data = {}
     cipher_rsa = PKCS1_OAEP.new(PUBLIC_KEY)
-    for field, value in data_dict.items():
-        if isinstance(value, str):
-            encrypted_value = cipher_rsa.encrypt(value.encode("UTF-8"))
-            encrypted_payload[field] = base64.b64encode(encrypted_value).decode("UTF-8")
 
-    return encrypted_payload
+    for field, value in data_dict.items():
+        if isinstance(value, datetime):
+            value = value.isoformat()
+        encrypted_value = cipher_rsa.encrypt(value.encode("UTF-8"))
+        encrypted_data[field] = base64.b64encode(encrypted_value).decode("UTF-8")
+    decrypt_data(encrypted_data)
+
+    return encrypted_data
 
 
 def decrypt_data(data_dict: dict):
     """Returns decrypted data after decoded at UTF-8"""
     decrypted_data = {}
-    # with open('erp_private_key.pem', 'rb') as f:
-    #     rsa_private_key = RSA.import_key(f.read())
     cipher_rsa = PKCS1_OAEP.new(PRIVATE_KEY)
+
     for field, value in data_dict.items():
         if isinstance(value, str):
             decoded_value = base64.b64decode(data_dict[field].encode("UTF-8"))
-            decrypted_data[field] = cipher_rsa.decrypt(decoded_value)
+            decrypted_value = cipher_rsa.decrypt(decoded_value)
+            decrypted_data[field] = decrypted_value.decode("UTF-8")
+
     return decrypted_data
 
 
@@ -94,8 +97,8 @@ def generate_token(db: Session, email: str, password: str) -> str:
         "id": str(db_user.id),  # type: ignore
         "email": str(db_user.email)  # type: ignore
         }
-        encrypted_payload = encrypt_data(data_dict=payload)
-        return create_access_token(data=encrypted_payload, expires_delta=access_token_expires)
+        
+        return create_access_token(data=payload, expires_delta=access_token_expires)
     raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='El usuario o la contraseña no coinciden',
