@@ -55,8 +55,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encrypt['exp'] = expire
+    # TODO encrypt expire time and decrypt correctly to decode with jwt.decode()
     to_encrypt = encrypt_data(data_dict=to_encrypt)
+    to_encrypt['exp'] = expire
     return jwt.encode(to_encrypt, AUTH_SECRET_KEY, AUTH_ALGORITHM)
 
 
@@ -70,21 +71,48 @@ def encrypt_data(data_dict: dict):
             value = value.isoformat()
         encrypted_value = cipher_rsa.encrypt(value.encode("UTF-8"))
         encrypted_data[field] = base64.b64encode(encrypted_value).decode("UTF-8")
-    decrypt_data(encrypted_data)
 
     return encrypted_data
 
 
-def decrypt_data(data_dict: dict):
+def decrypt_data(token: str):
     """Returns decrypted data after decoded at UTF-8"""
     decrypted_data = {}
     cipher_rsa = PKCS1_OAEP.new(PRIVATE_KEY)
+    # TODO IMPLEMENT
+    # token_header, token_payload, token_signature = token.split(".")
+    # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    # token_payload_decoded = base64.urlsafe_b64decode(token_payload + '=' * (4 - len(token_payload) % 4))
+    # token_payload_decoded_json = json.loads(token_payload_decoded)
+    # for field, value in token_payload_decoded_json.items():
+    #     decoded_value = base64.b64decode(value.encode("UTF-8"))
+    #     decrypted_value = cipher_rsa.decrypt(decoded_value).decode("UTF-8")
+    #     decrypted_data[field] = decrypted_value
+    #     if field == "exp":
+    #         from calendar import timegm
 
-    for field, value in data_dict.items():
-        if isinstance(value, str):
-            decoded_value = base64.b64decode(data_dict[field].encode("UTF-8"))
-            decrypted_value = cipher_rsa.decrypt(decoded_value)
-            decrypted_data[field] = decrypted_value.decode("UTF-8")
+    #         # a = base64.b64decode(value.encode("UTF-8"))
+    #         # b = cipher_rsa.decrypt(a).decode("UTF-8")
+    #         decrypted_value = datetime.fromisoformat(decrypted_value) # Convierte de vuelta a datetime si es necesario
+    #         decrypted_data[field] = decrypted_value.isoformat()
+    #         print("hola")
+    #         m = datetime.fromisoformat(decrypted_data[field])
+    #         print(int(decrypted_value.timestamp()))
+    #         decrypted_data[field] = int(decrypted_value.timestamp())
+    # payload_dectypted = base64.urlsafe_b64encode(json.dumps(decrypted_data).encode("UTF-8")).decode("UTF-8")
+    # new_token_decrypted = ".".join([token_header, payload_dectypted, token_signature])
+
+    # print(".".join([token_header, payload_dectypted, token_signature]))
+    # token_decrypted = ".".join([token_header, new_payload, token_signature])
+    # print(token_decrypted)
+
+    # for field, value in decoded_token.items():
+    #     print("field", "value")
+    #     print(field, value)
+        # if isinstance(value, str):
+        #     decoded_value = base64.b64decode(data_dict[field].encode("UTF-8"))
+        #     decrypted_value = cipher_rsa.decrypt(decoded_value)
+        #     decrypted_data[field] = decrypted_value.decode("UTF-8")
 
     return decrypted_data
 
@@ -97,7 +125,7 @@ def generate_token(db: Session, email: str, password: str) -> str:
         "id": str(db_user.id),  # type: ignore
         "email": str(db_user.email)  # type: ignore
         }
-        
+
         return create_access_token(data=payload, expires_delta=access_token_expires)
     raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
