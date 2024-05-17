@@ -5,13 +5,15 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from Crypto.Cipher import PKCS1_OAEP
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, Security, status
 from fastapi.responses import JSONResponse
-from jose import exceptions, jwe, jwt
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import exceptions, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app import models
+from app.helpers.db import get_db
 
 from .settings import AUTHSETTINGS
 
@@ -48,6 +50,23 @@ def authenticate_user(email: str, password: str, db: Session) -> models.User | b
     return False
 
 
+def get_current_user(db: Session = Depends(get_db),
+                     credentials: HTTPAuthorizationCredentials = Security(HTTPBearer())):
+    """Returns user logged object"""
+    try:
+        to_decrypt = credentials.credentials
+        payload_data = decrypt_data(to_decrypt)
+        user_email = payload_data["email"]
+
+        return db.query(models.User).filter(models.User.email == user_email).first()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Problem with credentials occured. {str(exc)}",
+        ) from exc
+
+
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None):
     """Returns The generated access token."""
     to_encrypt = data.copy()
@@ -79,40 +98,14 @@ def decrypt_data(token: str):
     """Returns decrypted data after decoded at UTF-8"""
     decrypted_data = {}
     cipher_rsa = PKCS1_OAEP.new(PRIVATE_KEY)
-    # TODO IMPLEMENT
-    # token_header, token_payload, token_signature = token.split(".")
-    # print("+++++++++++++++++++++++++++++++++++++++++++++++++++++")
-    # token_payload_decoded = base64.urlsafe_b64decode(token_payload + '=' * (4 - len(token_payload) % 4))
-    # token_payload_decoded_json = json.loads(token_payload_decoded)
-    # for field, value in token_payload_decoded_json.items():
-    #     decoded_value = base64.b64decode(value.encode("UTF-8"))
-    #     decrypted_value = cipher_rsa.decrypt(decoded_value).decode("UTF-8")
-    #     decrypted_data[field] = decrypted_value
-    #     if field == "exp":
-    #         from calendar import timegm
-
-    #         # a = base64.b64decode(value.encode("UTF-8"))
-    #         # b = cipher_rsa.decrypt(a).decode("UTF-8")
-    #         decrypted_value = datetime.fromisoformat(decrypted_value) # Convierte de vuelta a datetime si es necesario
-    #         decrypted_data[field] = decrypted_value.isoformat()
-    #         print("hola")
-    #         m = datetime.fromisoformat(decrypted_data[field])
-    #         print(int(decrypted_value.timestamp()))
-    #         decrypted_data[field] = int(decrypted_value.timestamp())
-    # payload_dectypted = base64.urlsafe_b64encode(json.dumps(decrypted_data).encode("UTF-8")).decode("UTF-8")
-    # new_token_decrypted = ".".join([token_header, payload_dectypted, token_signature])
-
-    # print(".".join([token_header, payload_dectypted, token_signature]))
-    # token_decrypted = ".".join([token_header, new_payload, token_signature])
-    # print(token_decrypted)
-
-    # for field, value in decoded_token.items():
-    #     print("field", "value")
-    #     print(field, value)
-        # if isinstance(value, str):
-        #     decoded_value = base64.b64decode(data_dict[field].encode("UTF-8"))
-        #     decrypted_value = cipher_rsa.decrypt(decoded_value)
-        #     decrypted_data[field] = decrypted_value.decode("UTF-8")
+    _, token_payload, _ = token.split(".")
+    payload_decoded = base64.urlsafe_b64decode(token_payload + '=' * (4 - len(token_payload) % 4))
+    payload_json = json.loads(payload_decoded)
+    for field, value in payload_json.items():
+        if isinstance(value, str):
+            decoded_value = base64.b64decode(value.encode("UTF-8"))
+            decrypted_value = cipher_rsa.decrypt(decoded_value).decode("UTF-8")
+            decrypted_data[field] = decrypted_value
 
     return decrypted_data
 
