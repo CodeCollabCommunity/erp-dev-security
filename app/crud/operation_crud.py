@@ -11,8 +11,10 @@ class CRUDRoleOperation(CRUDBase[RoleOperationModel, OperationCreateSchema, Oper
     Args:
         CRUDBase ([Item, ItemCreate, ItemUpdate])
     """
-    def get_by_params(self, operation_in: OperationCreateSchema, db: Session):
+    def get_by_params(self, operation_in: OperationCreateSchema | dict, db: Session):
         """Returns a operation in a single role and module"""
-        return db.query(self.model).filter_by(**operation_in.__dict__).first()
+        if not isinstance(operation_in, dict):
+            operation_in = operation_in.model_dump()
+        return db.query(self.model).filter_by(**operation_in).first()
 
 operation_crud = CRUDRoleOperation(RoleOperationModel)

@@ -27,3 +27,9 @@ class OperationCreateSchema(OperationBaseSchema):
 
 class OperationUpdateSchema(OperationBaseSchema):
     """Define the update schema for a Operation object."""
+
+
+class OperationRequestSchema(OperationBaseSchema):
+    """Define the schema for a Operation request."""
+    id: ClassVar
+    role_id: UUID | None = None
